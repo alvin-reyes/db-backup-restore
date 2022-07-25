@@ -1,18 +1,46 @@
-#!/bin/bash
+#!/bin/sh
 
-HOSTNAME=
-USERNAME=
-PASSWORD=
-DATABASE=
+# Description: Restore a PostgreSQL database from schema and data dump files 
 
-# Note that we are setting the password to a global environment variable temporarily.
-echo "Pulling Database: This may take a few minutes"
-export PGPASSWORD="$PASSWORD"
-pg_dump -F t -h $HOSTNAME -U $USERNAME $DATABASE > $(date +%Y-%m-%d).backup
-unset PGPASSWORD
-gzip $(date +%Y-%m-%d).backup
-echo "Pull Complete"
+# get username
+if [ -z $1 ]; then
+    echo "Enter the username:"
+    read USERNAME
+else
+    USERNAME=$1
+fi
 
-echo "Clearing old backups"
-find . -type f -iname '*.backup.gz' -ctime +15 -not -name '????-??-01.backup.gz' -delete
-echo "Clearing Complete"
+# get database name
+if [ -z $2 ]; then
+    echo "Enter the database name:"
+    read DBNAME
+else
+    DBNAME=$2
+fi
+
+# get schema file name
+if [ -z $3 ]; then
+    echo "Enter the schema file name:"
+    read SCHEMA
+else
+    SCHEMA=$3
+fi
+
+# get data file name
+if [ -z $4 ]; then
+    echo "Enter the data file name:"
+    read DATA
+else
+    DATA=$4
+fi
+
+# extra params on data file
+if [ -z $5 ]; then
+    echo "Extra params on data file:"
+    read EXTRA
+else
+    EXTRA=$5
+fi
+
+pg_dump --username=$USERNAME --schema-only $DBNAME > $SCHEMA
+pg_dump --username=$USERNAME --data-only --disable-triggers $EXTRA $DBNAME > $DATA
